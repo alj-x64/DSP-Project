@@ -69,14 +69,10 @@ def apply_restoration_chain(img, length, angle, k_val):
     """
     psf = motion_blur_psf(length, angle)
     
-    # Simulate the blur first (assuming we are testing restoration on clean images)
-    # If you are loading ALREADY blurred images, comment out the next line:
-    blurred_sim = cv2.filter2D(img, -1, psf) 
-    
     # Restore
-    restored = wiener_inverse_filter_color(blurred_sim, psf, k_val)
+    restored = wiener_inverse_filter_color(img, psf, k_val)
     
-    return blurred_sim, restored
+    return restored
 
 # ============================
 # BATCH PROCESSING (Legacy)

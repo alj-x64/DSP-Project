@@ -23,23 +23,23 @@ class ImageUI(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("DSP: Image Restoration & Analysis")
-        self.setGeometry(100, 100, 1300, 700) # Made window wider for side panel
+        self.setWindowTitle("DSP: Image Restoration (Real-Time)")
+        self.setGeometry(100, 100, 1300, 700) 
 
-        # --- Main Layout (Left: Controls/Image, Right: Analysis) ---
+        # --- Main Layout ---
         main_layout = QHBoxLayout() 
         
-        # Left Side Container (Images + Controls)
+        # Left Side (Images + Controls)
         left_container = QWidget()
         left_layout = QVBoxLayout()
         
         # Image Display Area
         image_row = QHBoxLayout()
         
-        self.lbl_input = QLabel("Original / Blurred")
+        self.lbl_input = QLabel("Original Input")
         self.lbl_input.setAlignment(Qt.AlignCenter)
         self.lbl_input.setStyleSheet("border: 1px solid #444; background-color: #222; color: #AAA;")
-        self.lbl_input.setFixedSize(400, 400) # Fixed size to keep layout stable
+        self.lbl_input.setFixedSize(400, 400) 
 
         self.lbl_output = QLabel("Restored Result")
         self.lbl_output.setAlignment(Qt.AlignCenter)
@@ -55,16 +55,16 @@ class ImageUI(QWidget):
 
         self.btn_load = QPushButton("Load Image")
         self.btn_load.clicked.connect(self.load_image)
-        self.btn_load.setStyleSheet("padding: 8px;")
+        self.btn_load.setStyleSheet("padding: 8px; font-weight: bold;")
 
         self.btn_save = QPushButton("Save Result")
         self.btn_save.clicked.connect(self.save_image)
         self.btn_save.setEnabled(False)
-        self.btn_save.setStyleSheet("padding: 8px; background-color: #4CAF50; color: white;")
+        self.btn_save.setStyleSheet("padding: 8px; background-color: #4CAF50; color: white; font-weight: bold;")
 
         # Sliders
         self.sl_len = QSlider(Qt.Horizontal)
-        self.sl_len.setRange(1, 60)
+        self.sl_len.setRange(1, 100) # Increased range for heavy blur
         self.sl_len.setValue(self.blur_len)
         self.sl_len.valueChanged.connect(self.update_params)
         
@@ -78,7 +78,7 @@ class ImageUI(QWidget):
         self.sl_k.setValue(int(self.wiener_k * 2000)) 
         self.sl_k.valueChanged.connect(self.update_params)
 
-        # Labels for sliders
+        # Labels
         self.lbl_len_val = QLabel(f"Length: {self.blur_len}")
         self.lbl_angle_val = QLabel(f"Angle: {self.blur_angle}°")
         self.lbl_k_val = QLabel(f"Wiener K: {self.wiener_k}")
@@ -104,10 +104,10 @@ class ImageUI(QWidget):
         left_layout.addWidget(controls_group)
         left_container.setLayout(left_layout)
 
-        # --- Right Side Container (Analysis Plots) ---
+        # --- Right Side (Analysis) ---
         right_container = QGroupBox("Signal Analysis")
         right_layout = QVBoxLayout()
-        right_container.setFixedWidth(350) # Fixed width for the sidebar
+        right_container.setFixedWidth(350)
 
         self.lbl_spectrum = QLabel("Spectrum")
         self.lbl_spectrum.setAlignment(Qt.AlignCenter)
@@ -132,18 +132,25 @@ class ImageUI(QWidget):
         main_layout.addWidget(right_container)
         self.setLayout(main_layout)
 
-    # ... [Load, Update, Save functions are same as before] ...
     def load_image(self):
         options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open", "", "Images (*.png *.jpg *.jpeg)", options=options)
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.jpeg)", options=options)
         if file_path:
             img = cv2.imread(file_path)
             if img is None: return
+            
+            # Resize logic for speed
             h, w = img.shape[:2]
-            if w > 800: # Resize if huge
+            if w > 800: 
                 scale = 800 / w
                 img = cv2.resize(img, (800, int(h * scale)))
+                
             self.original_image = img
+            
+            # Display Original Input IMMEDIATELY (Static)
+            self.display_image(self.original_image, self.lbl_input)
+            
+            # Run initial processing
             self.process_and_display()
 
     def update_params(self):
@@ -162,20 +169,27 @@ class ImageUI(QWidget):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save", "result.png", "Images (*.png *.jpg)", options=options)
         if file_path:
             cv2.imwrite(file_path, self.processed_image)
+            
+            # Save technical plots automatically
+            base_name = file_path.rsplit('.', 1)[0]
+            from project import save_spectrum, save_histogram
+            save_spectrum(self.processed_image, f"{base_name}_spectrum.png")
+            save_histogram(self.processed_image, f"{base_name}_histogram.png")
 
     def process_and_display(self):
         if self.original_image is None: return
 
-        blurred, restored = apply_restoration_chain(
+        # Only get the restored result
+        restored = apply_restoration_chain(
             self.original_image, self.blur_len, self.blur_angle, self.wiener_k
         )
         self.processed_image = restored
         self.btn_save.setEnabled(True)
 
-        self.display_image(blurred, self.lbl_input)
+        # Update ONLY the Output Label
         self.display_image(restored, self.lbl_output)
 
-        # --- UPDATE PLOTS ---
+        # Update Plots
         self.update_plots(restored)
 
     def display_image(self, img_cv, label_widget):
@@ -185,47 +199,35 @@ class ImageUI(QWidget):
         pixmap = QPixmap.fromImage(q_img)
         label_widget.setPixmap(pixmap.scaled(label_widget.width(), label_widget.height(), Qt.KeepAspectRatio))
 
-    # --- NEW PLOTTING FUNCTIONS ---
     def update_plots(self, img):
-        """Generates plots and puts them in the sidebar labels"""
-        
-        # 1. Magnitude Spectrum (FFT)
+        # 1. Magnitude Spectrum
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         f = np.fft.fft2(gray)
         fshift = np.fft.fftshift(f)
         magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1e-8)
-        
-        # Normalize to 0-255 for display
         mag_norm = cv2.normalize(magnitude_spectrum, None, 0, 255, cv2.NORM_MINMAX)
-        mag_img = np.uint8(mag_norm)
-        # Color map for "Science" look
-        mag_color = cv2.applyColorMap(mag_img, cv2.COLORMAP_INFERNO)
+        mag_color = cv2.applyColorMap(np.uint8(mag_norm), cv2.COLORMAP_INFERNO)
         self.display_image(mag_color, self.lbl_spectrum)
 
-        # 2. RGB Histogram (Using Matplotlib for nice axes)
+        # 2. Histogram
         self.plot_histogram_to_label(img, self.lbl_hist)
 
     def plot_histogram_to_label(self, img, label):
-        """Uses Matplotlib to plot hist, saves to buffer, displays in Label"""
-        # Create a small figure
-        fig, ax = plt.subplots(figsize=(3.5, 3), dpi=80) # Small size
+        fig, ax = plt.subplots(figsize=(3.5, 3), dpi=80)
         colors = ('b', 'g', 'r')
         for i, color in enumerate(colors):
             hist = cv2.calcHist([img], [i], None, [256], [0, 256])
             ax.plot(hist, color=color, linewidth=1)
-        
         ax.set_title("Color Distribution", fontsize=10)
         ax.set_xlim([0, 256])
         ax.grid(True, alpha=0.3)
-        ax.set_facecolor('#f0f0f0') # Light gray background
+        ax.set_facecolor('#f0f0f0')
         
-        # Save to memory buffer
         buf = io.BytesIO()
         plt.tight_layout()
         plt.savefig(buf, format='png')
-        plt.close(fig) # Clean up memory
+        plt.close(fig)
         
-        # Load into Qt
         buf.seek(0)
         q_img = QImage.fromData(buf.getvalue())
         pixmap = QPixmap.fromImage(q_img)
