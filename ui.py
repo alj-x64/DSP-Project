@@ -44,12 +44,22 @@ class ImageUI(QWidget):
         image_layout.addWidget(self.lbl_output)
 
         # --- Controls ---
-        
-        # 1. Load Button
+
+        # 1. Buttons Layout
         self.btn_load = QPushButton("Load Image")
         self.btn_load.clicked.connect(self.load_image)
         self.btn_load.setStyleSheet("padding: 10px; font-weight: bold;")
 
+        # --- NEW SAVE BUTTON ---
+        self.btn_save = QPushButton("Save Result")
+        self.btn_save.clicked.connect(self.save_image)
+        self.btn_save.setStyleSheet("padding: 10px; font-weight: bold; background-color: #4CAF50; color: white;")
+        self.btn_save.setEnabled(False) # Disable until we have an image
+        # -----------------------
+
+        # Update Grid Layout to hold both buttons
+        controls_layout.addWidget(self.btn_load, 0, 0)
+        controls_layout.addWidget(self.btn_save, 0, 1, 1, 2) # Span across 2 columns
         # 2. Sliders
         # Blur Length (1 to 50)
         self.sl_len = QSlider(Qt.Horizontal)
@@ -111,6 +121,28 @@ class ImageUI(QWidget):
             self.original_image = img
             self.process_and_display()
 
+    def process_and_display(self):
+        if self.original_image is None: return
+
+        # Call the DSP engine
+        blurred, restored = apply_restoration_chain(
+            self.original_image, 
+            self.blur_len, 
+            self.blur_angle, 
+            self.wiener_k
+        )
+
+        # --- STORE THE RESULT FOR SAVING ---
+        self.processed_image = restored 
+        self.btn_save.setEnabled(True) # Enable the save button now
+        # -----------------------------------
+
+        # Display Left (Blurred Input)
+        self.display_image(blurred, self.lbl_input)
+        
+        # Display Right (Restored Output)
+        self.display_image(restored, self.lbl_output)
+
     def update_params(self):
         if self.original_image is None: return
 
@@ -158,3 +190,21 @@ class ImageUI(QWidget):
             label_widget.height(), 
             Qt.KeepAspectRatio
         ))
+
+    def save_image(self):
+        if self.processed_image is None: return
+
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "Save Restored Image", 
+            "restored_image.png", 
+            "Images (*.png *.jpg *.jpeg)", 
+            options=options
+        )
+
+        if file_path:
+            # OpenCV writes the numpy array to disk
+            # It automatically handles encoding based on the file extension you chose
+            cv2.imwrite(file_path, self.processed_image)
+            print(f"Saved to: {file_path}")
