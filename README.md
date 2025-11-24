@@ -34,7 +34,7 @@ The Wiener filter reconstructs the original image in the frequency domain.
 4. Restore using Wiener filter (per channel)
 5. Apply CLAHE for contrast improvement
 6. Enhance sharpness with unsharp masking
-7. Compute MSE and SSIM metrics
+7. Compute and MSE and SSIM metrics
 8. Save results by clicking the save button.
 
 ---
@@ -51,8 +51,9 @@ The Wiener filter reconstructs the original image in the frequency domain.
 - Motion-blurred image restored using Wiener filter  
 - Enhanced contrast and sharpness  
 - Cleaned and visually improved version of the image  
-- MSE and SSIM printed in console  
-- Restored images saved in location you specify via a dialog
+- Frequency spectrum and Histogram plots
+- MSE and SSIM printed beside the restored image 
+- Restored images saved in location you specify via a pop-up dialog
 
 ---
 
@@ -67,12 +68,7 @@ Measures visual similarity (0–1 scale), with 1 being identical.
 ---
 
 ## **How to Run**
-In Linux,
+In Linux and Windows,
 ```bash
-python main.py
-```
-
-In Windows,
-```
 python main.py
 ```
