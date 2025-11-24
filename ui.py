@@ -170,6 +170,10 @@ class ImageUI(QWidget):
             self.wiener_k
         )
 
+        # IMPORTANT: Store the result so 'save_image' can access it
+        self.processed_image = restored
+        self.btn_save.setEnabled(True)
+
         # Display Left (Blurred Input)
         self.display_image(blurred, self.lbl_input)
         
