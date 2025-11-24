@@ -56,7 +56,7 @@ class ImageUI(QWidget):
         controls_group = QGroupBox("Simulation & Restoration Controls")
         controls_layout = QGridLayout()
 
-        self.btn_load = QPushButton("Load CLEAN Image")
+        self.btn_load = QPushButton("Load Image")
         self.btn_load.clicked.connect(self.load_image)
         self.btn_load.setStyleSheet("padding: 10px; font-weight: bold;")
 
