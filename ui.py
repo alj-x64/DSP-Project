@@ -147,7 +147,7 @@ class ImageUI(QWidget):
 
     def load_image(self):
         options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open CLEAN Image", "", "Images (*.png *.jpg *.jpeg)", options=options)
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Images (*.png *.jpg *.jpeg)", options=options)
         if file_path:
             img = cv2.imread(file_path)
             if img is None: return
