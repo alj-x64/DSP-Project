@@ -54,6 +54,7 @@ The Wiener filter reconstructs the original image in the frequency domain.
 - Frequency spectrum and Histogram plots
 - MSE and SSIM printed beside the restored image 
 - Restored images saved in location you specify via a pop-up dialog
+- CUDA-accelerated application (for supported GPUs)
 
 ---
 
