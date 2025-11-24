@@ -32,7 +32,7 @@ The Wiener filter reconstructs the original image in the frequency domain.
 ---
 
 ## **Process Overview**
-1. Load images from `data/`
+1. Load images by clicking "Load Image" button then select your image to be processed
 2. Generate PSF using LEN and THETA
 3. Simulate motion blur
 4. Restore using Wiener filter (per channel)
