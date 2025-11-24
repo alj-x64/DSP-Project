@@ -12,12 +12,8 @@
 ## **Project Title**
 **Color Image Restoration Using Wiener Filtering in the Frequency Domain**
 
----
-
 ## **Objective**
 This project aims to restore motion-blurred color images using frequency-domain Wiener filtering.
-
----
 
 ## **DSP Concept**
 
