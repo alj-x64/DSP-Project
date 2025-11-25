@@ -4,7 +4,7 @@
 ### Group Information
 - Cascante, Betty Mae – 22-07751
 - Gorreon, James Andrew – 
-- Dela Cruz, Angelo – 
+- Dela Cruz, Angelo – 20-50614
 - Catiban, Aljon – 21-11145
 
 ---
